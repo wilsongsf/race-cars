@@ -5,7 +5,25 @@
   <title>Corrida de Carros</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; }
-    .tabuleiro { display: flex; flex-wrap: wrap; width: 600px; margin: 20px auto; }
+    .tabuleiro {
+      display: grid;
+      grid-template-rows: repeat(auto, auto);
+      gap: 10px;
+      width: max-content;
+      margin: 20px auto;
+    }
+    .linha {
+      display: flex;
+    }
+    .linha.vazia-esquerda {
+      justify-content: flex-start;
+    }
+    .linha.vazia-direita {
+      justify-content: flex-end;
+    }
+    .linha.reversa {
+      flex-direction: row-reverse;
+    }
     .casa {
       width: 60px;
       height: 60px;
@@ -13,15 +31,19 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr 1fr;
+      margin: 1px;
     }
     .carro {
       width: 100%;
       height: 100%;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
     }
-    .azul { background-color: blue; }
-    .vermelho { background-color: red; }
-    .verde { background-color: green; }
-    .amarelo { background-color: yellow; }
+    .azul { background-image: url('car-blue.png'); }
+    .vermelho { background-image: url('car-red.png'); }
+    .verde { background-image: url('car-green.png'); }
+    .amarelo { background-image: url('car-yellow.png'); }
     .cartas, .controle { margin-top: 20px; }
     .carta {
       display: inline-block;
@@ -58,7 +80,9 @@
   <div id="mensagem" class="vencedor"></div>
 
   <script>
-    const totalCasas = 30;
+    const layout = [8, 1, 8, 1, 8];
+    const reversas = [false, false, true, false, false];
+    const totalCasas = layout.reduce((a, b) => a + b, 0);
     const cores = ['azul', 'vermelho', 'verde', 'amarelo'];
     const posicoes = {
       azul: 0,
@@ -71,18 +95,29 @@
     function criarTabuleiro() {
       const tabuleiro = document.getElementById('tabuleiro');
       tabuleiro.innerHTML = '';
-      for (let i = 0; i < totalCasas; i++) {
-        const casa = document.createElement('div');
-        casa.classList.add('casa');
-        casa.dataset.index = i;
-        cores.forEach(cor => {
-          const quadrante = document.createElement('div');
-          quadrante.classList.add('carro');
-          if (posicoes[cor] === i) quadrante.classList.add(cor);
-          casa.appendChild(quadrante);
-        });
-        tabuleiro.appendChild(casa);
-      }
+      let casaIndex = 0;
+      layout.forEach((qtd, linhaIndex) => {
+        const linha = document.createElement('div');
+        linha.classList.add('linha');
+        if (reversas[linhaIndex]) linha.classList.add('reversa');
+        if (qtd === 1) {
+          linha.classList.add(linhaIndex % 4 === 1 ? 'vazia-direita' : 'vazia-esquerda');
+        }
+        for (let i = 0; i < qtd; i++) {
+          const casa = document.createElement('div');
+          casa.classList.add('casa');
+          casa.dataset.index = casaIndex;
+          cores.forEach(cor => {
+            const quadrante = document.createElement('div');
+            quadrante.classList.add('carro');
+            if (posicoes[cor] === casaIndex) quadrante.classList.add(cor);
+            casa.appendChild(quadrante);
+          });
+          linha.appendChild(casa);
+          casaIndex++;
+        }
+        tabuleiro.appendChild(linha);
+      });
     }
 
     function gerarNumero() {
@@ -114,6 +149,14 @@
       });
     }
 
+    function atualizarCarta(index) {
+      const novoNumero = gerarNumero();
+      cartas[index] = novoNumero;
+      const cartaDivs = document.querySelectorAll('.carta');
+      cartaDivs[index].innerText = novoNumero;
+      cartaDivs[index].style.border = '1px solid black';
+    }
+
     function moverCarro() {
       if (cartaSelecionada === null) return alert("Selecione uma carta!");
       const cor = document.getElementById('carroSelecionado').value;
@@ -128,8 +171,8 @@
         document.getElementById('mensagem').innerText = `Carro ${cor.toUpperCase()} Venceu!`;
       }
 
+      atualizarCarta(cartaSelecionada);
       cartaSelecionada = null;
-      gerarCartas();
       criarTabuleiro();
     }
 
@@ -141,7 +184,6 @@
       criarTabuleiro();
     }
 
-    // Inicializa o jogo
     gerarCartas();
     criarTabuleiro();
   </script>
