@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Corrida de Carros</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; }
+    .tabuleiro { display: flex; flex-wrap: wrap; width: 600px; margin: 20px auto; }
+    .casa {
+      width: 60px;
+      height: 60px;
+      border: 1px solid #000;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .carro {
+      width: 100%;
+      height: 100%;
+    }
+    .azul { background-color: blue; }
+    .vermelho { background-color: red; }
+    .verde { background-color: green; }
+    .amarelo { background-color: yellow; }
+    .cartas, .controle { margin-top: 20px; }
+    .carta {
+      display: inline-block;
+      border: 1px solid #000;
+      width: 60px;
+      height: 60px;
+      line-height: 60px;
+      font-size: 24px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    select, button { margin: 5px; font-size: 16px; }
+    .vencedor { font-size: 20px; font-weight: bold; color: green; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Corrida de Carros</h1>
+  <div id="tabuleiro" class="tabuleiro"></div>
+
+  <div class="cartas" id="cartas"></div>
+
+  <div class="controle">
+    <label for="carroSelecionado">Escolha um carro:</label>
+    <select id="carroSelecionado">
+      <option value="azul">Azul</option>
+      <option value="vermelho">Vermelho</option>
+      <option value="verde">Verde</option>
+      <option value="amarelo">Amarelo</option>
+    </select>
+    <button onclick="moverCarro()">Mover</button>
+    <button onclick="reiniciar()">Reiniciar</button>
+  </div>
+
+  <div id="mensagem" class="vencedor"></div>
+
+  <script>
+    const totalCasas = 30;
+    const cores = ['azul', 'vermelho', 'verde', 'amarelo'];
+    const posicoes = {
+      azul: 0,
+      vermelho: 0,
+      verde: 0,
+      amarelo: 0
+    };
+    const cartas = [];
+
+    function criarTabuleiro() {
+      const tabuleiro = document.getElementById('tabuleiro');
+      tabuleiro.innerHTML = '';
+      for (let i = 0; i < totalCasas; i++) {
+        const casa = document.createElement('div');
+        casa.classList.add('casa');
+        casa.dataset.index = i;
+        cores.forEach(cor => {
+          const quadrante = document.createElement('div');
+          quadrante.classList.add('carro');
+          if (posicoes[cor] === i) quadrante.classList.add(cor);
+          casa.appendChild(quadrante);
+        });
+        tabuleiro.appendChild(casa);
+      }
+    }
+
+    function gerarNumero() {
+      const positivo = Math.random() < 0.51;
+      return positivo ? Math.floor(Math.random() * 6) + 1 : -(Math.floor(Math.random() * 6) + 1);
+    }
+
+    function gerarCartas() {
+      cartas.length = 0;
+      const cartasDiv = document.getElementById('cartas');
+      cartasDiv.innerHTML = '';
+      for (let i = 0; i < 4; i++) {
+        const num = gerarNumero();
+        cartas.push(num);
+        const carta = document.createElement('div');
+        carta.classList.add('carta');
+        carta.innerText = num;
+        carta.dataset.index = i;
+        carta.onclick = () => selecionarCarta(i);
+        cartasDiv.appendChild(carta);
+      }
+    }
+
+    let cartaSelecionada = null;
+    function selecionarCarta(index) {
+      cartaSelecionada = index;
+      document.querySelectorAll('.carta').forEach((c, i) => {
+        c.style.border = i === index ? '2px solid green' : '1px solid black';
+      });
+    }
+
+    function moverCarro() {
+      if (cartaSelecionada === null) return alert("Selecione uma carta!");
+      const cor = document.getElementById('carroSelecionado').value;
+      const movimento = cartas[cartaSelecionada];
+
+      if (document.getElementById('mensagem').innerText) return;
+
+      posicoes[cor] += movimento;
+      if (posicoes[cor] < 0) posicoes[cor] = 0;
+      if (posicoes[cor] >= totalCasas - 1) {
+        posicoes[cor] = totalCasas - 1;
+        document.getElementById('mensagem').innerText = `Carro ${cor.toUpperCase()} Venceu!`;
+      }
+
+      cartaSelecionada = null;
+      gerarCartas();
+      criarTabuleiro();
+    }
+
+    function reiniciar() {
+      cores.forEach(cor => posicoes[cor] = 0);
+      document.getElementById('mensagem').innerText = '';
+      cartaSelecionada = null;
+      gerarCartas();
+      criarTabuleiro();
+    }
+
+    // Inicializa o jogo
+    gerarCartas();
+    criarTabuleiro();
+  </script>
+</body>
+</html>
